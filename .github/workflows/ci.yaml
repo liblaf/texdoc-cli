@@ -47,6 +47,7 @@ jobs:
           name: texdoc-cli-${{ runner.os }}
           path: dist/*
 
+  continue-on-error: true
   commitizen:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     needs: build
@@ -69,11 +70,11 @@ jobs:
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.1
         with:
-          path: artifact/
+          path: dist/
       - name: GH Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.cz.outputs.version }}
           body_path: body.md
           files: |
-            artifact/**/*
+            dist/**/*
