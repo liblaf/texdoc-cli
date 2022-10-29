@@ -2,12 +2,55 @@ name: commitizen
 
 on:
   push:
-    branches-ignore:
-      - "**"
+    branches:
+      - "main"
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+          - "windows-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-deploy-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with deploy --no-interaction
+      - name: Build Binary
+        run: |
+          source .venv/bin/activate
+          poetry run build
+          mv dist/texdoc-cli dist/texdoc-cli-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: texdoc-cli-${{ runner.os }}
+          path: dist/*
+
   commitizen:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -20,8 +63,14 @@ jobs:
         with:
           github_token: ${{ github.token }}
           changelog_increment_filename: body.md
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v3.0.1
+        with:
+          path: dist/
       - name: GH Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.cz.outputs.version }}
           body_path: body.md
+          files: |
+            dist/**/*
