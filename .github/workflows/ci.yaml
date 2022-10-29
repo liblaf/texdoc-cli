@@ -1,4 +1,4 @@
-name: commitizen
+name: CI/CD
 
 on:
   push:
@@ -66,16 +66,14 @@ jobs:
         uses: JRubics/poetry-publish@v1.13
         with:
           pypi_token: ${{ secrets.PYPI_TOKEN }}
-      - run: |
-          rm --force --recursive dist
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.1
         with:
-          path: dist/
+          path: artifact/
       - name: GH Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.cz.outputs.version }}
           body_path: body.md
           files: |
-            dist/**/*
+            artifact/**/*
