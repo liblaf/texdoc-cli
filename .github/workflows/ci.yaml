@@ -51,7 +51,6 @@ jobs:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     needs: build
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Check out
         uses: actions/checkout@v3.1.0
@@ -67,6 +66,7 @@ jobs:
         uses: JRubics/poetry-publish@v1.13
         with:
           pypi_token: ${{ secrets.PYPI_TOKEN }}
+        continue-on-error: true
       - name: Download a Build Artifact
         uses: actions/download-artifact@v3.0.1
         with:
