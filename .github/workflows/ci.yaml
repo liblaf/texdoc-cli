@@ -47,11 +47,11 @@ jobs:
           name: texdoc-cli-${{ runner.os }}
           path: dist/*
 
-  continue-on-error: true
   commitizen:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     needs: build
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Check out
         uses: actions/checkout@v3.1.0
