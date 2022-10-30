@@ -3,16 +3,26 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-function _exec() {
-  echo -e -n "\033[1;94m"
-  echo -n "${@}"
-  echo -e "\033[0m"
+if command -v rich >/dev/null 2>&1; then
+  function info() {
+    rich --print "[bold bright_blue]${*}"
+  }
+else
+  function info() {
+    echo -e -n "\x1b[1;94m"
+    echo -n "${*}"
+    echo -e "\x1b[0m"
+  }
+fi
+
+function call() {
+  info "+ ${*}"
   "${@}"
 }
 
 REPO_HOME="$(realpath --canonicalize-missing "${0}/../..")"
-_exec cd "${REPO_HOME}"
-_exec sudo apt install libffi7
-_exec poetry run build
+call cd "${REPO_HOME}"
+call sudo apt install libffi7
+call poetry run build
 mkdir --parents "${HOME}/.local/bin"
-_exec cp "${REPO_HOME}/dist/texdoc-cli" "${HOME}/.local/bin"
+call cp "${REPO_HOME}/dist/$(basename "${REPO_HOME}")" "${HOME}/.local/bin"
